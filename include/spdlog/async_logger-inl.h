@@ -7,7 +7,7 @@
 #include <spdlog/async_logger.h>
 #endif
 
-#include <spdlog/details/thread_pool.h>
+#include <spdlog/details/thread_pool_base.h>
 #include <spdlog/sinks/sink.h>
 
 #include <memory>
@@ -15,7 +15,7 @@
 
 SPDLOG_INLINE spdlog::async_logger::async_logger(std::string logger_name,
                                                  sinks_init_list sinks_list,
-                                                 std::weak_ptr<details::thread_pool> tp,
+                                                 std::weak_ptr<details::thread_pool_base> tp,
                                                  async_overflow_policy overflow_policy)
     : async_logger(std::move(logger_name),
                    sinks_list.begin(),
@@ -25,7 +25,7 @@ SPDLOG_INLINE spdlog::async_logger::async_logger(std::string logger_name,
 
 SPDLOG_INLINE spdlog::async_logger::async_logger(std::string logger_name,
                                                  sink_ptr single_sink,
-                                                 std::weak_ptr<details::thread_pool> tp,
+                                                 std::weak_ptr<details::thread_pool_base> tp,
                                                  async_overflow_policy overflow_policy)
     : async_logger(
           std::move(logger_name), {std::move(single_sink)}, std::move(tp), overflow_policy) {}
@@ -57,15 +57,15 @@ SPDLOG_LOGGER_CATCH(source_loc())
 //
 // backend functions - called from the thread pool to do the actual job
 //
-SPDLOG_INLINE void spdlog::async_logger::backend_sink_it_(const details::log_msg &incoming_log_msg) {
+SPDLOG_INLINE void spdlog::async_logger::backend_sink_it_(const details::log_msg &msg) {
     for (auto &sink : sinks_) {
-        if (sink->should_log(incoming_log_msg.level)) {
-            SPDLOG_TRY { sink->log(incoming_log_msg); }
-            SPDLOG_LOGGER_CATCH(incoming_log_msg.source)
+        if (sink->should_log(msg.level)) {
+            SPDLOG_TRY { sink->log(msg); }
+            SPDLOG_LOGGER_CATCH(msg.source)
         }
     }
 
-    if (should_flush_(incoming_log_msg)) {
+    if (should_flush_(msg)) {
         backend_flush_();
     }
 }

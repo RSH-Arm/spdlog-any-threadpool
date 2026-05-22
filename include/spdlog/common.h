@@ -262,18 +262,15 @@ enum level_enum : int {
 #define SPDLOG_LEVEL_NAME_OFF spdlog::string_view_t("off", 3)
 
 #if !defined(SPDLOG_LEVEL_NAMES)
-#define SPDLOG_LEVEL_NAMES                                                                  \
-    {                                                                                       \
-        SPDLOG_LEVEL_NAME_TRACE, SPDLOG_LEVEL_NAME_DEBUG, SPDLOG_LEVEL_NAME_INFO,           \
-            SPDLOG_LEVEL_NAME_WARNING, SPDLOG_LEVEL_NAME_ERROR, SPDLOG_LEVEL_NAME_CRITICAL, \
-            SPDLOG_LEVEL_NAME_OFF                                                           \
-    }
+#define SPDLOG_LEVEL_NAMES                                                           \
+    {SPDLOG_LEVEL_NAME_TRACE,   SPDLOG_LEVEL_NAME_DEBUG, SPDLOG_LEVEL_NAME_INFO,     \
+     SPDLOG_LEVEL_NAME_WARNING, SPDLOG_LEVEL_NAME_ERROR, SPDLOG_LEVEL_NAME_CRITICAL, \
+     SPDLOG_LEVEL_NAME_OFF}
 #endif
 
 #if !defined(SPDLOG_SHORT_LEVEL_NAMES)
 
-#define SPDLOG_SHORT_LEVEL_NAMES \
-    { "T", "D", "I", "W", "E", "C", "O" }
+#define SPDLOG_SHORT_LEVEL_NAMES {"T", "D", "I", "W", "E", "C", "O"}
 #endif
 
 SPDLOG_API const string_view_t &to_string_view(spdlog::level::level_enum l) SPDLOG_NOEXCEPT;
@@ -294,6 +291,14 @@ enum class color_mode { always, automatic, never };
 enum class pattern_time_type {
     local,  // log localtime
     utc     // log utc
+};
+
+// Async overflow policy - block by default.
+// Used by async_logger and thread_pool
+enum class async_overflow_policy {
+    block,           // Block until message can be enqueued
+    overrun_oldest,  // Discard oldest message in the queue if full when trying to add new item.
+    discard_new      // Discard new message if the queue is full when trying to add new item.
 };
 
 //
@@ -339,6 +344,38 @@ struct file_event_handlers {
 };
 
 namespace details {
+
+// to_string_view
+
+SPDLOG_CONSTEXPR_FUNC spdlog::string_view_t to_string_view(const memory_buf_t &buf)
+    SPDLOG_NOEXCEPT {
+    return spdlog::string_view_t{buf.data(), buf.size()};
+}
+
+SPDLOG_CONSTEXPR_FUNC spdlog::string_view_t to_string_view(spdlog::string_view_t str)
+    SPDLOG_NOEXCEPT {
+    return str;
+}
+
+#if defined(SPDLOG_WCHAR_FILENAMES) || defined(SPDLOG_WCHAR_TO_UTF8_SUPPORT)
+SPDLOG_CONSTEXPR_FUNC spdlog::wstring_view_t to_string_view(const wmemory_buf_t &buf)
+    SPDLOG_NOEXCEPT {
+    return spdlog::wstring_view_t{buf.data(), buf.size()};
+}
+
+SPDLOG_CONSTEXPR_FUNC spdlog::wstring_view_t to_string_view(spdlog::wstring_view_t str)
+    SPDLOG_NOEXCEPT {
+    return str;
+}
+#endif
+
+#if defined(SPDLOG_USE_STD_FORMAT) && __cpp_lib_format >= 202207L
+template <typename T, typename... Args>
+SPDLOG_CONSTEXPR_FUNC std::basic_string_view<T> to_string_view(
+    std::basic_format_string<T, Args...> fmt) SPDLOG_NOEXCEPT {
+    return fmt.get();
+}
+#endif
 
 // make_unique support for pre c++14
 #if __cplusplus >= 201402L  // C++14 and beyond

@@ -183,7 +183,7 @@ if(SPDLOG_BUILD_SHARED OR BUILD_SHARED_LIBS)
         target_compile_definitions(spdlog PRIVATE FMT_LIB_EXPORT PUBLIC FMT_SHARED)
     endif()
 else()
-    add_library(spdlog STATIC ${SPDLOG_SRCS} ${SPDLOG_ALL_HEADERS})
+    add_library(spdlog STATIC ${SPDLOG_SRCS} ${SPDLOG_ALL_HEADERS} "include/spdlog/details/thread_pool_base.h")
 endif()
 
 add_library(spdlog::spdlog ALIAS spdlog)

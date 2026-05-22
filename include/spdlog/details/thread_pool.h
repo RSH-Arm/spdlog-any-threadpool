@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <spdlog/details/thread_pool_base.h>
 #include <spdlog/details/log_msg_buffer.h>
 #include <spdlog/details/mpmc_blocking_q.h>
 #include <spdlog/details/os.h>
@@ -67,7 +68,7 @@ struct async_msg : log_msg_buffer {
         : async_msg{nullptr, the_type} {}
 };
 
-class SPDLOG_API thread_pool {
+class SPDLOG_API thread_pool : public thread_pool_base {
 public:
     using item_type = async_msg;
     using q_type = details::mpmc_blocking_queue<item_type>;
@@ -87,8 +88,10 @@ public:
 
     void post_log(async_logger_ptr &&worker_ptr,
                   const details::log_msg &msg,
-                  async_overflow_policy overflow_policy);
-    void post_flush(async_logger_ptr &&worker_ptr, async_overflow_policy overflow_policy);
+                  async_overflow_policy overflow_policy) override;
+
+    void post_flush(async_logger_ptr &&worker_ptr, async_overflow_policy overflow_policy) override;
+
     size_t overrun_counter();
     void reset_overrun_counter();
     size_t discard_counter();

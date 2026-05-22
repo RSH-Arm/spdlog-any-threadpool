@@ -10,6 +10,7 @@
 
 #include <spdlog/common.h>
 #include <spdlog/details/periodic_worker.h>
+#include <spdlog/details/thread_pool_base.h>
 
 #include <chrono>
 #include <functional>
@@ -22,7 +23,6 @@ namespace spdlog {
 class logger;
 
 namespace details {
-class thread_pool;
 
 class SPDLOG_API registry {
 public:
@@ -49,9 +49,9 @@ public:
     // logger.
     void set_default_logger(std::shared_ptr<logger> new_default_logger);
 
-    void set_tp(std::shared_ptr<thread_pool> tp);
+    void set_tp(std::shared_ptr<thread_pool_base> tp);
 
-    std::shared_ptr<thread_pool> get_tp();
+    std::shared_ptr<thread_pool_base> get_tp();
 
     // Set global formatter. Each sink in each logger will get a clone of this object
     void set_formatter(std::unique_ptr<formatter> formatter);
@@ -116,7 +116,7 @@ private:
     spdlog::level::level_enum global_log_level_ = level::info;
     level::level_enum flush_level_ = level::off;
     err_handler err_handler_;
-    std::shared_ptr<thread_pool> tp_;
+    std::shared_ptr<thread_pool_base> tp_;
     std::unique_ptr<periodic_worker> periodic_flusher_;
     std::shared_ptr<logger> default_logger_;
     bool automatic_registration_ = true;

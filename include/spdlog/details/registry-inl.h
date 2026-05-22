@@ -9,6 +9,7 @@
 
 #include <spdlog/common.h>
 #include <spdlog/details/periodic_worker.h>
+#include <spdlog/details/thread_pool_base.h>
 #include <spdlog/logger.h>
 #include <spdlog/pattern_formatter.h>
 
@@ -110,12 +111,12 @@ SPDLOG_INLINE void registry::set_default_logger(std::shared_ptr<logger> new_defa
     default_logger_ = std::move(new_default_logger);
 }
 
-SPDLOG_INLINE void registry::set_tp(std::shared_ptr<thread_pool> tp) {
+SPDLOG_INLINE void registry::set_tp(std::shared_ptr<thread_pool_base> tp) {
     std::lock_guard<std::recursive_mutex> lock(tp_mutex_);
     tp_ = std::move(tp);
 }
 
-SPDLOG_INLINE std::shared_ptr<thread_pool> registry::get_tp() {
+SPDLOG_INLINE std::shared_ptr<thread_pool_base> registry::get_tp() {
     std::lock_guard<std::recursive_mutex> lock(tp_mutex_);
     return tp_;
 }
@@ -257,7 +258,7 @@ SPDLOG_INLINE void registry::throw_if_exists_(const std::string &logger_name) {
 }
 
 SPDLOG_INLINE void registry::register_logger_(std::shared_ptr<logger> new_logger) {
-    const auto &logger_name = new_logger->name();
+    auto &logger_name = new_logger->name();
     throw_if_exists_(logger_name);
     loggers_[logger_name] = std::move(new_logger);
 }
